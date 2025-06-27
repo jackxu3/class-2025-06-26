@@ -1,0 +1,56 @@
+---
+title: "Race and Income"
+author: "Jack Xu"
+execute:
+  echo: FALSE
+---
+
+```{r}
+#| warning: false
+
+library(tidyverse)
+library(plotly)
+library(scales)
+
+nyc_data <- read_csv("https://raw.githubusercontent.com/PPBDS/primer.data/master/data-raw/nyc_tracts.csv", show_col_types = FALSE)
+```
+
+```{r}
+# Add borough info based on 'tract' column
+nyc_data <- nyc_data %>%
+  mutate(
+    borough = case_when(
+      str_detect(tract, "Bronx") ~ "Bronx",
+      str_detect(tract, "Brooklyn") ~ "Brooklyn",
+      str_detect(tract, "Manhattan") ~ "Manhattan",
+      str_detect(tract, "Queens") ~ "Queens",
+      str_detect(tract, "Staten Island") ~ "Staten Island",
+      TRUE ~ "Other"
+    )
+  ) %>%
+  filter(!is.na(med_income))
+
+# Create the plot with interactive tooltips
+p <- ggplot(nyc_data, aes(
+  x = med_income,
+  y = race,
+  color = med_income,
+  text = tract  # tooltip text
+)) +
+  geom_jitter(alpha = 0.7, width = 0.15, height = 0.15, size = 1) +
+  scale_x_continuous(labels = scales::dollar_format()) +
+  scale_color_viridis_c(option = "plasma", direction = -1) +
+  facet_wrap(~ borough, ncol = 1) +
+  labs(
+    title = "Race and Income Across Census Tracts in New York City",
+    x = "Median Household Income",
+    y = "Race"
+  ) +
+  theme_minimal()
+
+# Convert ggplot to interactive plotly object with hover tooltip
+ggplotly(p, tooltip = "text")
+
+```
+
+This interactive graph visualizes the relationship between median household income and the largest racial group across different census tracts in New York City, separated by borough. Each point represents a census tract, with its position along the x-axis showing the median income and the y-axis indicating the predominant racial group in that tract. The color gradient reflects income levels, ranging from lower (purple) to higher (yellow), allowing for quick visual comparison. By hovering over individual points, you can see the specific census tract’s name, providing detailed contextual information. The faceted layout organizes the data by borough, highlighting the geographic distribution of income disparities and racial demographics across NYC. Overall, the graph reveals patterns of income inequality and racial composition differences between and within boroughs, offering an intuitive tool for exploring socioeconomic and demographic diversity in the city.
